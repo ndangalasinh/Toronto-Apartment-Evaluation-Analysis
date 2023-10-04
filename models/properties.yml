@@ -1,0 +1,12 @@
+version: 2
+sources:
+  - name: staging
+    database: dev 
+    schema: public
+    tables:
+      - name: apartment_registration
+
+models:
+  - name: stg_apartment_reg
+    description: Information about appartments registration for the city of Toronto
+
