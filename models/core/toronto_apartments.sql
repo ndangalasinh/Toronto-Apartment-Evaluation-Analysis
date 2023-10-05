@@ -1,58 +1,27 @@
 {{ config(materialized="table") }}
 with
     evaluation as (
-        select
-            id,
-            rsn as registration_id,
-            year_registered,
-            year_built,
-            year_evaluated,
-            -- (year_evaluated-year_built) as house_age
-            evaluation_completed_on,
-            property_type,
-            wardname,
-            score
+        select ward_number, count(distinct id) as number_of_houses
         from {{ ref("apartment_registration") }}
-        where
-            not (
-                id is null
-                or rsn is null
-                or year_built is null
-                or year_registered is null
-                or year_evaluated is null
-                or evaluation_completed_on is null
-                or wardname is null
-            )
+        group by ward_number
 
     ),
     short_term_rentals as (
-        select ward_name, id
+        select ward_number, count(distinct id) as number_of_strs
         from {{ ref("short_term_rental_registration") }}
-        where not (id is null or ward_name is null)
-    -- group by ward_name
+        group by ward_number
     ),
     fire_incidents as (
-        select
-            incident_ward,
-            id,
-            civilian_casualties,
-            count_of_persons_rescued,
-            estimated_dollar_loss
+        select incident_ward, count(distinct id) as number_of_fires
         from {{ ref("fire_report_ward") }}
-        where not (id is null or incident_ward is null)
-    -- group by incident_ward
+        group by incident_ward
     )
 select
-    e.wardname as ward,
-    e.property_type as type,
-    count(e.id) as total_evaluated_houses,
-    --sum(e.score) as ward_total_score,
-    count(s.id) as ward_total_str_count,
-    count(f.id) as ward_total_fires,
-    sum(f.civilian_casualties) as ward_total_casualities,
-    sum(f.count_of_persons_rescued + civilian_casualties) as ward_total_victims,
-    sum(f.estimated_dollar_loss) as ward_total_loss
+    e.ward_number as ward_id,
+    {{ get_ward_name("ward_id") }} as ward_descr,
+    e.number_of_houses,
+    s.number_of_strs,
+    f.number_of_fires
 from evaluation as e
-left join short_term_rentals as s on e.wardname = s.ward_name
-left join fire_incidents as f on e.wardname = f.incident_ward
-group by ward, type
+left join short_term_rentals as s on e.ward_number = s.ward_number
+left join fire_incidents as f on e.ward_number = f.incident_ward

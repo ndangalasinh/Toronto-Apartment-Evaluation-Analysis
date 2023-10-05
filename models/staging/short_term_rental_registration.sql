@@ -8,5 +8,4 @@ select
     address,
     unit,
     postal_code
-
 from{{ ref("short-term-rental-registrations-data") }}
