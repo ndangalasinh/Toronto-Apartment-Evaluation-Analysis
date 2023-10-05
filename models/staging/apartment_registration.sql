@@ -3,7 +3,7 @@
 SELECT
     --identifiers
     id, 
-    rsn AS registration_id,
+    rsn,
     --date records
     year_registered,
     year_built,
